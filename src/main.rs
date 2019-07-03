@@ -103,6 +103,8 @@ impl Proof {
             let tree = ZkMerkleTree::new(&witness);
             println!("[round {}] mt root: {:?} size: {} leafs: {}", i, tree.get_root(), tree.tree.len(), tree.data.len());
 
+            seed.push(i.to_string());
+            seed.push(tree.get_root().to_hex().to_string());
             let idx = blake2b(&seed.join("").into_bytes()).as_bytes()[0] % ((problem.len()+1) as u8);
             println!("[round {}] random idx: {}", i, idx);
 
@@ -117,9 +119,6 @@ impl Proof {
             proof.values.push(v2);
             proof.auth_paths.push(ap1);
             proof.auth_paths.push(ap2);
-
-            seed.push(proof.roots[proof.roots.len()-1].to_hex().to_string());
-            seed.push(idx.to_string());
         }
 
         proof
@@ -131,6 +130,8 @@ impl Proof {
         let mut seed = Proof::get_seed(problem);
 
         for (i, root) in proof.roots.iter().enumerate() {
+            seed.push(i.to_string());
+            seed.push(root.to_hex().to_string());
             let idx = blake2b(&seed.join("").into_bytes()).as_bytes()[0] % ((problem.len()+1) as u8);
             valid &= idx == proof.indices[i];
             let idx = idx as usize;
@@ -155,9 +156,6 @@ impl Proof {
             let check2 = ZkMerkleTree::verify_merkle_path(root, problem.len()+1, i2, proof.values[2*i+1], &proof.auth_paths[2*i+1]);
             println!("[round {}] check auth_path for element[{}]: {}", i, i2, check2);
             valid &= check2;
-
-            seed.push(proof.roots[i].to_hex().to_string());
-            seed.push(idx.to_string());
         }
 
         valid
